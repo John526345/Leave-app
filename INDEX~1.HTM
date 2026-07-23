@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Somrak · សម្រាក</title>
+<link rel="icon" type="image/jpeg" href="/icon.jpg">
+<link rel="apple-touch-icon" href="/icon.jpg">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#5c6b4f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Somrak">
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#1a2733; --muted:#6b7a89; --line:#e3e8ee;
+    --brand:#0e7a5f; --brand-soft:#e2f3ee; --amber:#b45309; --amber-soft:#fef3e2;
+    --red:#b91c1c; --red-soft:#fdeaea; --blue:#1d4ed8; --blue-soft:#e7edfd;
+    --radius:14px; --shadow:0 1px 3px rgba(16,32,48,.08);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+    background:var(--bg); color:var(--ink); font-size:16px; line-height:1.45;
+    padding-bottom:calc(70px + env(safe-area-inset-bottom));}
+  h1,h2,h3{margin:0}
+  button{font:inherit; cursor:pointer; border:none; background:none; color:inherit}
+  input,select,textarea{font:inherit; width:100%; padding:12px 14px; border:1.5px solid var(--line);
+    border-radius:10px; background:#fff; color:var(--ink); outline:none;}
+  input:focus,select:focus,textarea:focus{border-color:var(--brand)}
+  label{display:block; font-size:13px; font-weight:600; color:var(--muted); margin:14px 0 6px}
+  .wrap{max-width:640px; margin:0 auto; padding:16px}
+  .topbar{position:sticky; top:0; z-index:20; background:var(--brand); color:#fff;
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;}
+  .topbar .inner{max-width:640px; margin:0 auto; display:flex; align-items:center; justify-content:space-between}
+  .topbar h1{font-size:18px; font-weight:700}
+  .topbar .sub{font-size:12px; opacity:.85}
+  .logout{background:rgba(255,255,255,.15); border-radius:8px; padding:7px 12px; color:#fff; font-size:13px; font-weight:600}
+  .card{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-bottom:12px}
+  .card h2{font-size:15px; font-weight:700; margin-bottom:10px}
+  .balances{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+  .bal{border-radius:var(--radius); padding:12px 10px; text-align:center}
+  .bal .num{font-size:24px; font-weight:800; line-height:1.1}
+  .bal .lbl{font-size:11.5px; font-weight:600; margin-top:3px}
+  .bal .cap{font-size:10.5px; opacity:.75}
+  .bal.annual{background:var(--brand-soft); color:var(--brand)}
+  .bal.sick{background:var(--amber-soft); color:var(--amber)}
+  .bal.comp{background:var(--blue-soft); color:var(--blue)}
+  .btn{display:block; width:100%; text-align:center; padding:14px; border-radius:12px;
+    font-weight:700; font-size:15.5px}
+  .btn-primary{background:var(--brand); color:#fff}
+  .btn-primary:active{opacity:.85}
+  .btn-ghost{background:var(--brand-soft); color:var(--brand)}
+  .btn-danger{background:var(--red-soft); color:var(--red)}
+  .btn-sm{width:auto; display:inline-block; padding:9px 16px; font-size:13.5px; border-radius:9px}
+  .row-btns{display:flex; gap:8px; margin-top:10px}
+  .row-btns .btn{flex:1}
+  .item{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+    padding:12px 0; border-bottom:1px solid var(--line)}
+  .item:last-child{border-bottom:none}
+  .item .main{min-width:0; flex:1}
+  .item .t1{font-weight:700; font-size:14.5px}
+  .item .t2{font-size:13px; color:var(--muted); margin-top:2px}
+  .item .t3{font-size:12.5px; color:var(--muted); margin-top:2px; font-style:italic; overflow-wrap:anywhere}
+  .badge{flex-shrink:0; font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:99px; white-space:nowrap}
+  .badge.pending{background:var(--amber-soft); color:var(--amber)}
+  .badge.hr_pending{background:var(--blue-soft); color:var(--blue)}
+  .badge.approved{background:var(--brand-soft); color:var(--brand)}
+  .badge.rejected{background:var(--red-soft); color:var(--red)}
+  .badge.cancelled{background:#eceff2; color:var(--muted)}
+  .badge.invited{background:var(--blue-soft); color:var(--blue)}
+  .type-dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px}
+  .dot-annual{background:var(--brand)} .dot-sick{background:var(--amber)} .dot-comp{background:var(--blue)}
+  .empty{text-align:center; color:var(--muted); padding:24px 8px; font-size:14px}
+  .nav{position:fixed; bottom:0; left:0; right:0; z-index:20; background:#fff;
+    border-top:1px solid var(--line); display:flex; padding-bottom:env(safe-area-inset-bottom)}
+  .nav button{flex:1; padding:9px 0 7px; text-align:center; color:var(--muted); font-size:10.5px; font-weight:600}
+  .nav button .ico{display:block; font-size:21px; line-height:1.2}
+  .nav button.on{color:var(--brand)}
+  .hero{background:var(--brand); color:#fff; text-align:center;
+    padding:calc(48px + env(safe-area-inset-top)) 20px 40px; border-radius:0 0 28px 28px}
+  .hero .logo{font-size:44px}
+  .hero h1{font-size:22px; margin-top:8px}
+  .hero p{margin:6px 0 0; font-size:13.5px; opacity:.85}
+  .seg{display:flex; background:#eceff2; border-radius:11px; padding:4px; margin-bottom:4px}
+  .seg button{flex:1; padding:9px 4px; border-radius:8px; font-size:13px; font-weight:700; color:var(--muted)}
+  .seg button.on{background:#fff; color:var(--ink); box-shadow:var(--shadow)}
+  .modal-bg{position:fixed; inset:0; background:rgba(10,20,30,.45); z-index:40;
+    display:flex; align-items:flex-end; justify-content:center}
+  .modal{background:#fff; width:100%; max-width:640px; border-radius:20px 20px 0 0;
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom)); max-height:88vh; overflow-y:auto}
+  .modal h2{font-size:17px; margin-bottom:4px}
+  .modal .sub{font-size:13px; color:var(--muted)}
+  @media(min-width:640px){ .modal-bg{align-items:center} .modal{border-radius:20px; width:480px} }
+  #toast{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(84px + env(safe-area-inset-bottom));
+    background:var(--ink); color:#fff; padding:11px 20px; border-radius:99px; font-size:14px; font-weight:600;
+    z-index:60; opacity:0; transition:opacity .25s; pointer-events:none; max-width:88vw; text-align:center}
+  #toast.show{opacity:1}
+  .pill-count{background:var(--red); color:#fff; font-size:10px; font-weight:800;
+    border-radius:99px; padding:1px 6px; vertical-align:top; margin-left:2px}
+  .muted{color:var(--muted); font-size:13px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .stat-days{font-size:13.5px; font-weight:700; color:var(--brand); margin-top:8px}
+  .warn{color:var(--red); font-weight:700}
+  .today-chip{display:inline-block; background:var(--brand-soft); color:var(--brand);
+    font-size:12.5px; font-weight:700; padding:5px 12px; border-radius:99px; margin:0 6px 6px 0}
+  .notif{padding:11px 12px; border-radius:11px; background:#f7f9fa; margin-bottom:8px; font-size:13.5px}
+  .notif.unread{background:var(--blue-soft)}
+  .notif .when{font-size:11.5px; color:var(--muted); margin-top:2px}
+  .linkbox{background:#f0f4f3; border:1.5px dashed var(--brand); border-radius:10px;
+    padding:10px 12px; font-size:12.5px; word-break:break-all; margin:10px 0; font-family:monospace}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* Leave Tracker — client */
+
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), 2400);
+}
+const TYPES = { annual:{label:"Annual",cls:"annual"}, sick:{label:"Sick",cls:"sick"}, comp:{label:"Compensate",cls:"comp"} };
+const fmtN = n => (Math.round(n*10)/10).toString();
+function fmtDate(s){ if(!s) return ""; return new Date(s+"T00:00:00").toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
+const fmtRange = (a,b) => a === b ? fmtDate(a) : fmtDate(a) + " → " + fmtDate(b);
+function fmtWhen(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{day:"numeric",month:"short"}) + " " +
+    d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+}
+const todayStr = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+
+/* ---------- api ---------- */
+let TOKEN = localStorage.getItem("lt.token") || null;
+async function api(method, path, body){
+  const r = await fetch(path, {
+    method,
+    headers: Object.assign({ "Content-Type":"application/json" }, TOKEN ? { Authorization:"Bearer "+TOKEN } : {}),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await r.json().catch(() => ({}));
+  if(!r.ok){
+    if(r.status === 401 && TOKEN){ setToken(null); screen = "login"; render(); }
+    throw new Error(data.error || "Something went wrong");
+  }
+  return data;
+}
+function setToken(t){ TOKEN = t; if(t) localStorage.setItem("lt.token", t); else localStorage.removeItem("lt.token"); }
+
+/* ---------- app state ---------- */
+let S = null;            // server state
+let screen = "loading";  // loading | setup | login | join | app
+let tab = "home";
+let reqType = "annual";
+let apprFilter = "pending";
+let joinInfo = null;
+let resetInfo = null;
+let modalEl = null;
+let bootOrg = "Somrak";
+let landed = false; // first-visit tab routing done?
+function pickLandingTab(){
+  if(landed || !S) return; landed = true;
+  const urlTab = new URLSearchParams(location.search).get("tab");
+  const canApprove = S.me.role === "admin" || S.isManager;
+  const waiting = S.requests.filter(r => r.userId !== S.me.id && r.status === "pending").length;
+  if(canApprove && (urlTab === "approve" || waiting > 0)) tab = "approve";
+  if(urlTab) history.replaceState(null, "", "/");
+}
+
+function openModal(html){
+  closeModal();
+  modalEl = document.createElement("div");
+  modalEl.className = "modal-bg";
+  modalEl.innerHTML = '<div class="modal">' + html + "</div>";
+  modalEl.addEventListener("click", e => { if(e.target === modalEl) closeModal(); });
+  document.body.appendChild(modalEl);
+}
+function closeModal(){ if(modalEl){ modalEl.remove(); modalEl = null; } }
+
+async function refresh(){
+  S = await api("GET","/api/state");
+  render();
+}
+async function boot(){
+  const t = new URLSearchParams(location.search).get("t");
+  if(location.pathname === "/join" && t){
+    try{
+      joinInfo = await api("GET","/api/invite/"+encodeURIComponent(t));
+      joinInfo.token = t; screen = "join";
+    }catch(e){ screen = "badinvite"; joinInfo = { error: e.message }; }
+    return render();
+  }
+  const rt = new URLSearchParams(location.search).get("reset");
+  if(rt){
+    try{
+      resetInfo = await api("GET","/api/reset/"+encodeURIComponent(rt));
+      resetInfo.token = rt; screen = "reset";
+    }catch(e){ screen = "badinvite"; joinInfo = { error: e.message }; }
+    return render();
+  }
+  const b = await api("GET","/api/bootstrap").catch(() => ({ needsSetup:false }));
+  if(b.orgName) bootOrg = b.orgName;
+  if(b.needsSetup){ screen = "setup"; return render(); }
+  if(TOKEN){
+    try{ await refresh(); screen = "app"; pickLandingTab(); return render(); }
+    catch(e){ setToken(null); }
+  }
+  screen = "login"; render();
+}
+
+/* ---------- render ---------- */
+function render(){
+  const app = $("#app");
+  if(screen === "loading"){ app.innerHTML = '<div class="empty" style="padding-top:40vh">Loading…</div>'; return; }
+  if(screen === "setup"){ app.innerHTML = viewSetup(); return; }
+  if(screen === "login"){ app.innerHTML = viewLogin(); return; }
+  if(screen === "join"){ app.innerHTML = viewJoin(); return; }
+  if(screen === "reset"){ app.innerHTML = viewReset(); return; }
+  if(screen === "badinvite"){
+    app.innerHTML = '<div class="hero"><div class="logo">🌴</div><h1>Somrak</h1></div>' +
+      '<div class="wrap"><div class="card"><div class="empty">' + esc(joinInfo.error) + "</div>" +
+      '<button class="btn btn-ghost" onclick="location.href=\'/\'">Go to log in</button></div></div>';
+    return;
+  }
+  // app
+  const me = S.me, isAdmin = me.role === "admin";
+  const canApprove = isAdmin || S.isManager;
+  const pendingForMe = S.requests.filter(r => r.userId !== me.id && r.status === "pending").length;
+  const unread = S.notifications.filter(n => n.unread).length;
+
+  let body = "";
+  if(tab === "home") body = viewHome();
+  if(tab === "request") body = viewRequest();
+  if(tab === "approve") body = viewApprove();
+  if(tab === "team") body = viewTeam();
+  if(tab === "settings") body = viewSettings();
+
+  const navBtn = (id, ico, lbl, count) =>
+    '<button class="' + (tab === id ? "on" : "") + '" onclick="go(\'' + id + '\')">' +
+    '<span class="ico">' + ico + "</span>" + lbl +
+    (count ? ' <span class="pill-count">' + count + "</span>" : "") + "</button>";
+
+  app.innerHTML =
+    '<div class="topbar"><div class="inner">' +
+      "<div><h1>" + esc(S.settings.orgName) + '</h1><div class="sub">' + esc(me.name) +
+      (isAdmin ? " · Admin" : (S.isManager ? " · Manager" : "")) + "</div></div>" +
+      '<button class="logout" onclick="logout()">Log out</button>' +
+    "</div></div>" +
+    '<div class="wrap">' + body + "</div>" +
+    '<div class="nav">' +
+      navBtn("home","🏠","Home", isAdmin ? unread : 0) +
+      navBtn("request","➕","Request") +
+      (canApprove ? navBtn("approve","✅","Approve", pendingForMe) : "") +
+      (isAdmin ? navBtn("team","👥","Team") : "") +
+      navBtn("settings","⚙️","Settings") +
+    "</div>";
+}
+function go(t){ tab = t; window.scrollTo(0,0); render(); refresh().catch(()=>{}); }
+function logout(){ setToken(null); S = null; screen = "login"; tab = "home"; render(); }
+
+/* ---------- setup / login / join ---------- */
+function viewSetup(){
+  return '<div class="hero"><div class="logo">🌴</div><h1>Somrak</h1><p>One-time setup — create the admin account</p></div>' +
+    '<div class="wrap"><div class="card"><h2>Create admin account</h2>' +
+    '<label>Organisation name</label><input id="su-org" placeholder="e.g. Alongsiders">' +
+    '<label>Your name</label><input id="su-name" placeholder="Full name">' +
+    '<label>Your email</label><input id="su-email" type="email" placeholder="you@example.org">' +
+    '<label>Password (6+ characters)</label><input id="su-pass" type="password">' +
+    '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doSetup()">Get started</button></div></div></div>';
+}
+async function doSetup(){
+  try{
+    const r = await api("POST","/api/setup",{ org:$("#su-org").value, name:$("#su-name").value,
+      email:$("#su-email").value, password:$("#su-pass").value });
+    setToken(r.token); screen = "app"; await refresh(); toast("Welcome! 🎉");
+  }catch(e){ toast(e.message); }
+}
+function viewLogin(){
+  return '<div class="hero"><div class="logo">🌴</div><h1>' + esc(bootOrg) + '</h1><p>Log in with your email</p></div>' +
+    '<div class="wrap"><div class="card">' +
+    '<label>Email</label><input id="li-email" type="email" autocomplete="email">' +
+    '<label>Password</label><input id="li-pass" type="password" autocomplete="current-password">' +
+    '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doLogin()">Log in</button></div>' +
+    '<div id="li-err" class="muted" style="margin-top:12px;text-align:center;color:#c0392b;display:none"></div>' +
+    '<div class="muted" style="margin-top:12px;text-align:center"><a href="#" style="color:inherit" onclick="showForgot(document.getElementById(\'li-email\').value.trim());return false">Forgot your password?</a></div>' +
+    "</div></div>";
+}
+async function doLogin(){
+  try{
+    const r = await api("POST","/api/login",{ email:$("#li-email").value, password:$("#li-pass").value });
+    setToken(r.token); screen = "app"; tab = "home"; landed = false;
+    await refresh(); pickLandingTab(); render();
+  }catch(e){ loginFailed(e.message); }
+}
+function viewJoin(){
+  return '<div class="hero"><div class="logo">🌴</div><h1>' + esc(joinInfo.org) + "</h1>" +
+    "<p>Welcome, " + esc(joinInfo.name) + "! Set a password to join.</p></div>" +
+    '<div class="wrap"><div class="card">' +
+    '<label>Choose a password (6+ characters)</label><input id="jn-pass" type="password">' +
+    '<label>Type it again</label><input id="jn-pass2" type="password">' +
+    '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doJoin()">Join</button></div></div></div>';
+}
+async function doJoin(){
+  if($("#jn-pass").value !== $("#jn-pass2").value) return toast("Passwords don't match");
+  try{
+    const r = await api("POST","/api/join",{ token:joinInfo.token, password:$("#jn-pass").value });
+    setToken(r.token); history.replaceState(null,"","/");
+    screen = "app"; tab = "home"; await refresh(); toast("You're in! 🎉");
+  }catch(e){ toast(e.message); }
+}
+
+
+/* ---------- password reset ---------- */
+function showForgot(prefill){
+  openModal(
+    "<h2>Reset your password</h2>" +
+    '<div class="sub">Type your email and we\'ll send you a link to choose a new password.</div>' +
+    '<label>Email</label><input id="fg-email" type="email" autocomplete="email">' +
+    '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doForgot()">Email me a reset link</button></div>'
+  );
+  if(prefill) $("#fg-email").value = prefill;
+}
+async function doForgot(){
+  const em = $("#fg-email").value.trim();
+  if(!em) return toast("Type your email first");
+  try{
+    await api("POST","/api/forgot",{ email: em });
+    closeModal();
+    openModal("<h2>Check your email 📬</h2>" +
+      '<div class="sub">If <b>' + esc(em) + "</b> has an account, a reset link is on its way. It works once and expires in 1 hour.</div>");
+  }catch(e){ toast(e.message); }
+}
+function loginFailed(msg){
+  const el = $("#li-err");
+  if(el){
+    el.style.display = "block";
+    el.innerHTML = esc(msg) + ' — <a href="#" style="color:#c0392b" onclick="showForgot(document.getElementById(\'li-email\').value.trim());return false">reset your password</a>';
+  } else toast(msg);
+}
+function viewReset(){
+  return '<div class="hero"><div class="logo">🌴</div><h1>' + esc(resetInfo.org) + "</h1>" +
+    "<p>Hi " + esc(resetInfo.name) + ", choose your new password.</p></div>" +
+    '<div class="wrap"><div class="card">' +
+    '<label>New password (6+ characters)</label><input id="rs-pass" type="password">' +
+    '<label>Type it again</label><input id="rs-pass2" type="password">' +
+    '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doReset()">Save new password</button></div></div></div>';
+}
+async function doReset(){
+  if($("#rs-pass").value !== $("#rs-pass2").value) return toast("Passwords don't match");
+  try{
+    const r = await api("POST","/api/reset",{ token: resetInfo.token, password: $("#rs-pass").value });
+    setToken(r.token); history.replaceState(null,"","/");
+    screen = "app"; tab = "home"; await refresh(); toast("Password updated ✓");
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- shared rows ---------- */
+function userName(id){ const u = S.users.find(x => x.id === id); return u ? u.name : "?"; }
+function statusLabel(s){ return ({pending:"Pending",approved:"Approved",rejected:"Rejected",cancelled:"Cancelled"})[s] || s; }
+function requestRow(r, opts){
+  opts = opts || {};
+  const mine = r.userId === S.me.id;
+  const showName = !mine;
+  const isAdmin = S.me.role === "admin";
+  const open = r.status === "pending";
+  let actions = "";
+  const owner = S.users.find(x => x.id === r.userId) || {};
+  const boss = owner.managerId ? S.users.find(x => x.id === owner.managerId) : null;
+  const bossCanAct = boss && boss.joined !== false;      // boss exists and has joined
+  if(opts.decide && !mine && open){
+    actions = '<div class="row-btns">' +
+      '<button class="btn btn-sm btn-primary" onclick="decide(\'' + r.id + "','approved')\">Approve</button>" +
+      '<button class="btn btn-sm btn-danger" onclick="decide(\'' + r.id + "','rejected')\">Reject</button>" +
+      "</div>";
+  }
+  if(mine && open){
+    actions = '<div class="row-btns"><button class="btn btn-sm btn-danger" onclick="cancelReq(\'' + r.id + "')\">Cancel request</button></div>";
+  }
+  let balLine = "";
+  if(opts.decide && !mine && open){
+    const rb = S.balances[r.userId];
+    if(rb) balLine = '<div class="t2">Remaining ' + TYPES[r.type].label.toLowerCase() +
+      ' balance: <b>' + fmtN(rb[r.type]) + ' days</b></div>';
+  }
+  let trail = "";
+  if(r.decidedBy && (r.status === "approved" || r.status === "rejected"))
+    trail += '<div class="t3">' + statusLabel(r.status) + " by " + esc(userName(r.decidedBy)) + "</div>";
+  return '<div class="item"><div class="main">' +
+    '<div class="t1"><span class="type-dot dot-' + TYPES[r.type].cls + '"></span>' +
+    (showName ? esc(userName(r.userId)) + " — " : "") + TYPES[r.type].label + " · " +
+    fmtN(r.days) + (r.days === 1 ? " day" : " days") + "</div>" +
+    '<div class="t2">' + fmtRange(r.start, r.end) + "</div>" + balLine +
+    (r.reason ? '<div class="t3">"' + esc(r.reason) + '"</div>' : "") + trail + actions +
+    '</div><span class="badge ' + r.status + '">' + statusLabel(r.status) + "</span></div>";
+}
+async function decide(id, status){
+  try{ await api("POST","/api/requests/"+id+"/decide",{ status }); toast(status === "approved" ? "Approved ✓" : "Rejected"); await refresh(); }
+  catch(e){ toast(e.message); }
+}
+async function cancelReq(id){
+  if(!confirm("Cancel this request?")) return;
+  try{ await api("POST","/api/requests/"+id+"/cancel"); await refresh(); }catch(e){ toast(e.message); }
+}
+
+/* ---------- home ---------- */
+function viewHome(){
+  const me = S.me, isAdmin = me.role === "admin";
+  const b = S.balances[me.id];
+  let html = '<div class="card"><h2>My balances — ' + new Date().getFullYear() + '</h2><div class="balances">' +
+    '<div class="bal annual"><div class="num">' + fmtN(b.annual) + '</div><div class="lbl">Annual</div><div class="cap">of ' + fmtN(b.annualTotal) + ' days</div></div>' +
+    '<div class="bal sick"><div class="num">' + fmtN(b.sick) + '</div><div class="lbl">Sick</div><div class="cap">of ' + fmtN(b.sickTotal) + ' days</div></div>' +
+    '<div class="bal comp"><div class="num">' + fmtN(b.comp) + '</div><div class="lbl">Compensate</div><div class="cap">earned ' + fmtN(b.compEarned) + ' days</div></div>' +
+    "</div>" +
+    '<div class="muted" style="margin-top:10px">Your requests go to: <b>' + esc(S.approverName) + "</b></div></div>";
+
+  if(isAdmin && S.notifications.length){
+    const unread = S.notifications.filter(n => n.unread).length;
+    html += '<div class="card"><h2>Activity ' + (unread ? '<span class="pill-count">' + unread + "</span>" : "") + "</h2>" +
+      S.notifications.slice(0, 8).map(n =>
+        '<div class="notif' + (n.unread ? " unread" : "") + '">' + esc(n.text) +
+        '<div class="when">' + fmtWhen(n.createdAt) + "</div>" +
+        (n.waText ? '<div class="row-btns"><button class="btn btn-sm btn-ghost" onclick="copyWA(\'' + n.id + '\')">📋 Copy for WhatsApp</button></div>' : "") +
+        "</div>").join("") +
+      (unread ? '<button class="btn btn-ghost" style="margin-top:6px" onclick="markRead()">Mark all as read</button>' : "") +
+      "</div>";
+  }
+  if(S.onLeaveToday.length){
+    html += '<div class="card"><h2>On leave today</h2>' +
+      S.onLeaveToday.map(o => '<span class="today-chip">' + esc(o.name) + " · " + TYPES[o.type].label + "</span>").join("") + "</div>";
+  }
+  const mine = S.requests.filter(r => r.userId === me.id);
+  html += '<div class="card"><h2>My requests</h2>' +
+    (mine.length ? mine.slice(0, 10).map(r => requestRow(r)).join("") :
+      '<div class="empty">No requests yet. Tap ➕ Request to add one.</div>') + "</div>";
+  html += '<button class="btn btn-primary" onclick="go(\'request\')">➕ New leave request</button>';
+  return html;
+}
+function copyWA(id){
+  const n = S.notifications.find(x => x.id === id);
+  if(!n || !n.waText) return;
+  const done = () => toast("Copied — paste it in WhatsApp 📋");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(n.waText).then(done).catch(() => fallbackCopy(n.waText, done));
+  } else fallbackCopy(n.waText, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ toast("Couldn't copy"); }
+  ta.remove();
+}
+async function markRead(){ try{ await api("POST","/api/notifications/read"); await refresh(); }catch(e){} }
+
+/* ---------- request ---------- */
+function viewRequest(){
+  const b = S.balances[S.me.id];
+  const left = { annual:b.annual, sick:b.sick, comp:b.comp }[reqType];
+  const today = todayStr();
+  return '<div class="card"><h2>New leave request</h2>' +
+    '<label>Leave type</label><div class="seg">' +
+    Object.keys(TYPES).map(t =>
+      '<button class="' + (reqType === t ? "on" : "") + '" onclick="setReqType(\'' + t + '\')">' + TYPES[t].label + "</button>").join("") +
+    "</div>" +
+    '<div class="muted">' + TYPES[reqType].label + ' leave left this year: <b>' + fmtN(left) + " days</b>" +
+    (reqType === "comp" && left <= 0 ? ' — <span class="warn">no compensate days earned yet</span>' : "") + "</div>" +
+    '<div class="grid2"><div><label>From</label><input type="date" id="rq-start" value="' + today + '" onchange="reqDays()"></div>' +
+    '<div><label>To</label><input type="date" id="rq-end" value="' + today + '" onchange="reqDays()"></div></div>' +
+    '<label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:var(--ink)">' +
+    '<input type="checkbox" id="rq-half" style="width:20px;height:20px" onchange="reqDays()"> Half day (single date only)</label>' +
+    '<div class="stat-days" id="rq-days"></div>' +
+    "<label>Reason (optional)</label>" +
+    '<textarea id="rq-reason" rows="2" placeholder="e.g. Family visit"></textarea>' +
+    '<div class="muted" style="margin-top:8px">Goes to <b>' + esc(S.approverName) + "</b> for approval.</div>" +
+    '<div style="margin-top:14px"><button class="btn btn-primary" onclick="submitReq()">Submit request</button></div></div>';
+}
+function setReqType(t){ reqType = t; render(); }
+function holidayDates(){ return new Set((S.holidays || []).map(h => h.date)); }
+function isoOf(d){ return new Date(d.getTime() - d.getTimezoneOffset()*6e4).toISOString().slice(0,10); }
+function clientCountDays(start, end, half){
+  if(!start || !end) return 0;
+  const a = new Date(start+"T00:00:00"), bb = new Date(end+"T00:00:00");
+  if(bb < a) return 0;
+  const hol = holidayDates();
+  if(half && start === end){
+    const wd = a.getDay();
+    if(hol.has(start)) return 0;
+    if(!S.settings.countWeekends && (wd === 0 || wd === 6)) return 0;
+    return 0.5;
+  }
+  let n = 0;
+  for(let d = new Date(a); d <= bb; d.setDate(d.getDate()+1)){
+    const wd = d.getDay();
+    if(hol.has(isoOf(d))) continue;
+    if(S.settings.countWeekends || (wd !== 0 && wd !== 6)) n++;
+  }
+  return n;
+}
+function holidaysInRange(start, end){
+  if(!start || !end) return [];
+  const a = new Date(start+"T00:00:00"), bb = new Date(end+"T00:00:00");
+  if(bb < a) return [];
+  const hol = holidayDates();
+  const out = [];
+  for(let d = new Date(a); d <= bb; d.setDate(d.getDate()+1)){
+    const iso = isoOf(d);
+    if(hol.has(iso)){ const h = (S.holidays||[]).find(x => x.date === iso); out.push(h ? h.name : iso); }
+  }
+  return out;
+}
+function reqDays(){
+  const start = $("#rq-start").value, end = $("#rq-end").value;
+  const d = clientCountDays(start, end, $("#rq-half").checked);
+  const hs = holidaysInRange(start, end);
+  const note = hs.length ? '<div class="muted" style="font-weight:600;margin-top:2px">Public holiday not counted: ' + hs.map(esc).join(", ") + "</div>" : "";
+  $("#rq-days").innerHTML = (d > 0 ? "= " + fmtN(d) + (d === 1 ? " working day" : " working days") : "") + note;
+}
+async function submitReq(){
+  const start = $("#rq-start").value, end = $("#rq-end").value;
+  const half = $("#rq-half").checked, reason = $("#rq-reason").value.trim();
+  if(!start || !end) return toast("Pick the dates");
+  if(end < start) return toast("End date is before start date");
+  const days = clientCountDays(start, end, half);
+  if(days <= 0) return toast("Selected dates are only weekends");
+  const left = { annual:S.balances[S.me.id].annual, sick:S.balances[S.me.id].sick, comp:S.balances[S.me.id].comp }[reqType];
+  if(days > left && !confirm("This exceeds your remaining " + TYPES[reqType].label.toLowerCase() +
+    " balance (" + fmtN(left) + " days). Submit anyway?")) return;
+  try{
+    await api("POST","/api/requests",{ type:reqType, start, end, halfDay:half, reason });
+    tab = "home"; toast("Request sent to " + S.approverName + " ✓"); await refresh();
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- approve ---------- */
+function viewApprove(){
+  const me = S.me;
+  const others = S.requests.filter(r => r.userId !== me.id);
+  const pending = others.filter(r => r.status === "pending");
+  let list = apprFilter === "pending" ? pending : others.filter(r => apprFilter === "all" || r.status === apprFilter);
+  const segs = ["pending","approved","rejected","all"];
+  let html = '<div class="card"><h2>' + (me.role === "admin" ? "All requests" : "My team's requests") + '</h2>' +
+    '<div class="seg">' + segs.map(s =>
+      '<button class="' + (apprFilter === s ? "on" : "") + '" onclick="setApprFilter(\'' + s + '\')">' +
+      s[0].toUpperCase() + s.slice(1) + "</button>").join("") + "</div>" +
+    (list.length ? list.map(r => requestRow(r, { decide:true })).join("") :
+      '<div class="empty">' + (apprFilter === "pending" ? "All caught up ✓" : "Nothing here.") + "</div>") + "</div>";
+  // manager's team balances
+  if(me.role !== "admin" && S.isManager){
+    const team = S.users.filter(x => x.managerId === me.id);
+    html += '<div class="card"><h2>My team — ' + new Date().getFullYear() + "</h2>" +
+      team.map(p => {
+        const b = S.balances[p.id] || { annual:0, sick:0, comp:0 };
+        return '<div class="item"><div class="main"><div class="t1">' + esc(p.name) + "</div>" +
+        '<div class="t2">Annual <b>' + fmtN(b.annual) + "</b> · Sick <b>" + fmtN(b.sick) + "</b> · Comp <b>" + fmtN(b.comp) + "</b></div>" +
+        '<div class="row-btns"><button class="btn btn-sm btn-ghost" onclick="addComp(\'' + p.id + "')\">+ Comp days</button></div>" +
+        "</div></div>"; }).join("") + "</div>";
+  }
+  return html;
+}
+function setApprFilter(s){ apprFilter = s; render(); }
+
+/* ---------- team (admin) ---------- */
+function viewTeam(){
+  const active = S.users.filter(x => x.active);
+  const inactive = S.users.filter(x => !x.active);
+  let html = '<div class="card"><h2>Team — ' + new Date().getFullYear() + "</h2>" +
+    active.map(p => {
+      const b = S.balances[p.id] || { annual:0, sick:0, comp:0 };
+      const mgr = p.managerId ? userName(p.managerId) : null;
+      return '<div class="item"><div class="main">' +
+      '<div class="t1">' + esc(p.name) +
+      (p.role === "admin" ? ' <span class="muted">(admin)</span>' : "") +
+      (p.joined === false ? ' <span class="badge invited">invited</span>' : "") + "</div>" +
+      '<div class="t2">' + (mgr ? "Boss: " + esc(mgr) + " · " : "") +
+      "Annual <b>" + fmtN(b.annual) + "</b> · Sick <b>" + fmtN(b.sick) + "</b> · Comp <b>" + fmtN(b.comp) + "</b></div>" +
+      '<div class="row-btns">' +
+      '<button class="btn btn-sm btn-ghost" onclick="editUser(\'' + p.id + "')\">Edit</button>" +
+      '<button class="btn btn-sm btn-ghost" onclick="addComp(\'' + p.id + "')\">+ Comp</button>" +
+      (p.joined === false ? '<button class="btn btn-sm btn-ghost" onclick="showInvite(\'' + p.id + "')\">🔗 Invite</button>" : "") +
+      "</div></div></div>"; }).join("") +
+    '<div style="margin-top:12px"><button class="btn btn-primary" onclick="editUser(null)">➕ Add staff member</button></div></div>';
+  if(inactive.length){
+    html += '<div class="card"><h2>Deactivated</h2>' + inactive.map(p =>
+      '<div class="item"><div class="main"><div class="t1">' + esc(p.name) + '</div>' +
+      '<div class="row-btns"><button class="btn btn-sm btn-ghost" onclick="editUser(\'' + p.id + "')\">Edit</button></div></div></div>").join("") + "</div>";
+  }
+  return html;
+}
+function editUser(id){
+  const u = id ? S.users.find(x => x.id === id) : null;
+  const mgrs = S.users.filter(x => x.active && (!u || x.id !== u.id));
+  openModal(
+    "<h2>" + (u ? "Edit " + esc(u.name) : "Add staff member") + "</h2>" +
+    (u ? "" : '<div class="sub">You\'ll get an invite link to send them after saving.</div>') +
+    '<label>Full name</label><input id="eu-name" value="' + esc(u ? u.name : "") + '">' +
+    '<label>Email</label><input id="eu-email" type="email" value="' + esc(u ? u.email : "") + '">' +
+    '<label>Role</label><select id="eu-role"' + (u && u.id === S.me.id ? " disabled" : "") + '>' +
+    '<option value="staff"' + (u && u.role === "staff" ? " selected" : "") + ">Staff</option>" +
+    '<option value="admin"' + (u && u.role === "admin" ? " selected" : "") + ">Admin (sees everything)</option></select>" +
+    '<label>Boss (approves their leave)</label><select id="eu-mgr">' +
+    '<option value="">— None (admin approves) —</option>' +
+    mgrs.map(m => '<option value="' + m.id + '"' + (u && u.managerId === m.id ? " selected" : "") + ">" + esc(m.name) + "</option>").join("") +
+    "</select>" +
+    '<div class="grid2"><div><label>Annual days/yr</label><input id="eu-annual" type="number" inputmode="decimal" value="' + (u ? u.entitlements.annual : 18) + '"></div>' +
+    '<div><label>Sick days/yr</label><input id="eu-sick" type="number" inputmode="decimal" value="' + (u ? u.entitlements.sick : 12) + '"></div></div>' +
+    '<div class="row-btns"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" onclick="saveUser(' + (u ? "'" + u.id + "'" : "null") + ')">Save</button></div>' +
+    (u && u.id !== S.me.id ? '<div style="margin-top:10px"><button class="btn ' + (u.active ? "btn-danger" : "btn-ghost") + '" onclick="toggleActive(\'' + u.id + "'," + !u.active + ")\">" +
+      (u.active ? "Deactivate (keeps history)" : "Reactivate") + "</button></div>" +
+      '<div style="margin-top:8px"><button class="btn btn-danger" onclick="deleteUser(\'' + u.id + "')\">🗑 Delete permanently (erases their history)</button></div>" : "")
+  );
+}
+async function deleteUser(id){
+  const u = S.users.find(x => x.id === id);
+  if(!confirm("Permanently delete " + u.name + "? Their leave records and balances will be erased. This cannot be undone.")) return;
+  try{ await api("POST","/api/users/"+id+"/delete"); closeModal(); toast("Deleted"); await refresh(); }
+  catch(e){ toast(e.message); }
+}
+async function saveUser(id){
+  const payload = {
+    name: $("#eu-name").value.trim(), email: $("#eu-email").value.trim(),
+    role: $("#eu-role").value, managerId: $("#eu-mgr").value || null,
+    entitlements: { annual: $("#eu-annual").value, sick: $("#eu-sick").value },
+  };
+  if(!payload.name || !payload.email) return toast("Name and email are required");
+  try{
+    if(id){ await api("POST","/api/users/"+id, payload); closeModal(); toast("Saved ✓"); await refresh(); }
+    else{
+      const r = await api("POST","/api/users", payload);
+      await refresh(); showInviteLink(r.user);
+    }
+  }catch(e){ toast(e.message); }
+}
+async function toggleActive(id, active){
+  try{ await api("POST","/api/users/"+id,{ active }); closeModal(); await refresh(); }catch(e){ toast(e.message); }
+}
+function showInvite(id){
+  const u = S.users.find(x => x.id === id);
+  if(u) showInviteLink(u);
+}
+function showInviteLink(u){
+  const link = location.origin + "/join?t=" + u.inviteToken;
+  openModal(
+    "<h2>Invite " + esc(u.name) + "</h2>" +
+    '<div class="sub">Send this link by email, WhatsApp or Telegram. They open it, set a password, and they\'re in.</div>' +
+    '<div class="linkbox" id="inv-link">' + esc(link) + "</div>" +
+    '<div class="row-btns">' +
+    '<button class="btn btn-primary" onclick="copyText(\'' + link + '\')">📋 Copy link</button></div>' +
+    '<div class="row-btns">' +
+    '<button class="btn btn-ghost" onclick="emailInvite(\'' + u.id + '\')">✉️ Email the invite to ' + esc(u.email) + '</button></div>' +
+    '<div style="margin-top:8px"><button class="btn btn-ghost" onclick="closeModal()">Done</button></div>'
+  );
+}
+async function emailInvite(id){
+  try{ await api("POST","/api/users/"+id+"/sendinvite"); toast("Invite emailed ✓"); closeModal(); }
+  catch(e){ toast(e.message); }
+}
+function copyText(t){
+  const done = () => toast("Link copied 📋");
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done).catch(() => fallbackCopy(t, done));
+  else fallbackCopy(t, done);
+}
+function addComp(id){
+  const u = S.users.find(x => x.id === id);
+  openModal(
+    '<h2>Add compensate days</h2><div class="sub">For ' + esc(u.name) + " — e.g. worked a weekend or holiday</div>" +
+    '<label>Days earned</label><input id="cc-days" type="number" inputmode="decimal" step="0.5" value="1">' +
+    '<label>Date worked</label><input id="cc-date" type="date" value="' + todayStr() + '">' +
+    '<label>Note (optional)</label><input id="cc-note" placeholder="e.g. Youth camp Saturday">' +
+    '<div class="row-btns"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" onclick="saveComp(\'' + id + "')\">Add</button></div>"
+  );
+}
+async function saveComp(id){
+  try{
+    await api("POST","/api/credits",{ userId:id, days:$("#cc-days").value, date:$("#cc-date").value, note:$("#cc-note").value.trim() });
+    closeModal(); toast("Compensate days added ✓"); await refresh();
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- settings ---------- */
+function viewSettings(){
+  const me = S.me, isAdmin = me.role === "admin";
+  let html = '<div class="card"><h2>My account</h2>' +
+    '<div class="muted">' + esc(me.name) + " · " + esc(me.email) + "</div>" +
+    '<div style="margin-top:12px"><button class="btn btn-ghost" onclick="changePass()">Change my password</button></div></div>';
+  if(isAdmin){
+    html += '<div class="card"><h2>Organisation</h2>' +
+      '<label>Organisation name</label><input id="st-org" value="' + esc(S.settings.orgName) + '">' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink)">' +
+      '<input type="checkbox" id="st-wk" style="width:20px;height:20px"' + (S.settings.countWeekends ? " checked" : "") + "> Count weekends as leave days</label>" +
+      '<div style="margin-top:12px"><button class="btn btn-primary" onclick="saveSettings()">Save</button></div></div>' +
+      '<div class="card"><h2>Email notifications</h2>' +
+      '<div class="muted">' + (S.settings.emailEnabled
+        ? "✅ On — the department head gets an email for each new request, HR/admins are informed of every decision, and staff get the outcome by email."
+        : "⚠️ Off — to turn on, add the BREVO_API_KEY and EMAIL_FROM settings where the app is hosted (see the setup guide).") +
+      "</div></div>" +
+      holidaysCard() +
+      '<div class="card"><h2>Reports</h2>' +
+      '<div class="muted">Download leave records for ' + new Date().getFullYear() + ' to open in Excel or Google Sheets.</div>' +
+      '<div class="row-btns"><button class="btn btn-ghost" onclick="exportSummaryCSV()">📊 Balances summary (CSV)</button></div>' +
+      '<div class="row-btns"><button class="btn btn-ghost" onclick="exportRequestsCSV()">📄 All leave requests (CSV)</button></div></div>' +
+      '<div class="card"><h2>Backup</h2>' +
+      '<div class="muted">Download a full backup of all data. Keep one somewhere safe every week or two. To move to a new host or recover, restore a backup file below.</div>' +
+      '<div class="row-btns"><button class="btn btn-ghost" onclick="exportData()">⬇️ Export backup</button></div>' +
+      '<div class="row-btns"><button class="btn btn-ghost" onclick="document.getElementById(\'restore-file\').click()">♻️ Restore from backup</button></div>' +
+      '<input type="file" id="restore-file" accept="application/json,.json" style="display:none" onchange="restoreData(this)"></div>';
+  }
+  return html;
+}
+function holidaysCard(){
+  const list = (S.holidays || []);
+  const y = new Date().getFullYear();
+  const rows = list.length ? list.map(h =>
+    '<div class="item"><div class="main"><div class="t1">' + esc(h.name) + "</div>" +
+    '<div class="t2">' + fmtDate(h.date) + "</div></div>" +
+    '<button class="btn btn-sm btn-danger" onclick="deleteHoliday(\'' + h.id + "')\">Remove</button></div>").join("")
+    : '<div class="empty">No public holidays added yet.</div>';
+  return '<div class="card"><h2>Public holidays</h2>' +
+    '<div class="muted">Days added here are never counted against anyone\'s leave (e.g. Khmer New Year, Pchum Ben).</div>' +
+    rows +
+    '<div class="grid2" style="margin-top:12px"><div><label>Date</label><input type="date" id="hol-date" value="' + todayStr() + '"></div>' +
+    '<div><label>Name</label><input id="hol-name" placeholder="e.g. Khmer New Year"></div></div>' +
+    '<div class="row-btns"><button class="btn btn-ghost" onclick="addHoliday()">➕ Add holiday</button></div></div>';
+}
+async function addHoliday(){
+  const date = $("#hol-date").value, name = $("#hol-name").value.trim();
+  if(!date) return toast("Pick a date");
+  try{ await api("POST","/api/holidays",{ date, name }); toast("Holiday added ✓"); await refresh(); }
+  catch(e){ toast(e.message); }
+}
+async function deleteHoliday(id){
+  try{ await api("POST","/api/holidays/"+id+"/delete"); await refresh(); }catch(e){ toast(e.message); }
+}
+function csvCell(v){ v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }
+function downloadCSV(name, rows){
+  const csv = rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type:"text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
+  toast("Downloaded ✓");
+}
+function exportSummaryCSV(){
+  const y = new Date().getFullYear();
+  const head = ["Name","Email","Role","Boss","Annual entitlement","Annual remaining","Sick entitlement","Sick remaining","Comp earned","Comp remaining"];
+  const rows = [head];
+  S.users.filter(u => u.active).forEach(u => {
+    const b = S.balances[u.id] || {};
+    rows.push([u.name, u.email || "", u.role, u.managerId ? userName(u.managerId) : "",
+      fmtN(b.annualTotal||0), fmtN(b.annual||0), fmtN(b.sickTotal||0), fmtN(b.sick||0),
+      fmtN(b.compEarned||0), fmtN(b.comp||0)]);
+  });
+  downloadCSV("leave-balances-" + y + ".csv", rows);
+}
+function exportRequestsCSV(){
+  const head = ["Person","Type","From","To","Days","Half day","Status","Reason","Decided by","Requested on"];
+  const rows = [head];
+  S.requests.slice().sort((a,b) => (a.start||"").localeCompare(b.start||"")).forEach(r => {
+    rows.push([userName(r.userId), TYPES[r.type] ? TYPES[r.type].label : r.type, r.start, r.end,
+      fmtN(r.days), r.halfDay ? "yes" : "", statusLabel(r.status), r.reason || "",
+      r.decidedBy ? userName(r.decidedBy) : "", (r.createdAt||"").slice(0,10)]);
+  });
+  downloadCSV("leave-requests-" + new Date().getFullYear() + ".csv", rows);
+}
+function restoreData(input){
+  const file = input.files && input.files[0];
+  input.value = "";
+  if(!file) return;
+  if(!confirm("Restore from this backup? It will REPLACE all current data (staff, requests, balances). This cannot be undone.")) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    let data;
+    try{ data = JSON.parse(reader.result); }catch(e){ return toast("That file isn't a valid backup"); }
+    try{ await api("POST","/api/import",{ data }); toast("Backup restored ✓"); await refresh(); }
+    catch(e){ toast(e.message); }
+  };
+  reader.readAsText(file);
+}
+function changePass(){
+  openModal("<h2>Change password</h2>" +
+    '<label>Current password</label><input id="cp-old" type="password">' +
+    '<label>New password (6+ characters)</label><input id="cp-new" type="password">' +
+    '<div class="row-btns"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" onclick="savePass()">Save</button></div>');
+}
+async function savePass(){
+  try{ await api("POST","/api/password",{ old:$("#cp-old").value, password:$("#cp-new").value });
+    closeModal(); toast("Password changed ✓"); }catch(e){ toast(e.message); }
+}
+async function saveSettings(){
+  try{ await api("POST","/api/settings",{ orgName:$("#st-org").value, countWeekends:$("#st-wk").checked });
+    toast("Saved ✓"); await refresh(); }catch(e){ toast(e.message); }
+}
+async function exportData(){
+  try{
+    const d = await api("GET","/api/export");
+    const blob = new Blob([JSON.stringify(d, null, 2)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "leave-backup-" + todayStr() + ".json";
+    a.click(); URL.revokeObjectURL(a.href);
+    toast("Backup downloaded ✓");
+  }catch(e){ toast(e.message); }
+}
+
+/* show/hide password eyes */
+(function(){
+  const st = document.createElement("style");
+  st.textContent = ".pw-wrap{position:relative;display:block}.pw-wrap input{width:100%;padding-right:44px;box-sizing:border-box}.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;background:none;border:none;font-size:18px;line-height:1;opacity:.55;padding:2px}.pw-eye:active,.pw-eye:hover{opacity:1}";
+  document.head.appendChild(st);
+  function addEyes(){
+    document.querySelectorAll('input[type="password"]:not([data-eye])').forEach(function(inp){
+      inp.setAttribute("data-eye","1");
+      const w = document.createElement("span"); w.className = "pw-wrap";
+      inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "pw-eye"; b.textContent = "👁️";
+      b.setAttribute("aria-label","Show password");
+      b.onclick = function(){
+        if(inp.type === "password"){ inp.type = "text"; b.textContent = "🙈"; }
+        else { inp.type = "password"; b.textContent = "👁️"; }
+        inp.focus();
+      };
+      w.appendChild(b);
+    });
+  }
+  addEyes();
+  new MutationObserver(addEyes).observe(document.body, { childList:true, subtree:true });
+})();
+
+boot();
+</script>
+</body>
+</html>

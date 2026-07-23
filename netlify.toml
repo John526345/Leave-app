@@ -1,0 +1,21 @@
+# Netlify configuration for Leave Tracker
+# The static app lives in public/. All /api/* calls go to one function.
+# Data is stored in Netlify Blobs (no database or disk to set up).
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Send every API call to the function...
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# ...and let the single-page app handle every other path
+# (e.g. /join and /?reset=...). Real files in public/ are served first,
+# so icon.jpg and manifest.json still work.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
