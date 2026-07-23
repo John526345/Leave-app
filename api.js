@@ -11,14 +11,25 @@ const core = require("../../core");
 const STORE = "leave-tracker";
 const KEY = "db";
 
+// Get a Blobs store. Netlify normally configures this automatically inside a
+// deployed function. If that automatic context is missing (some deploy setups),
+// fall back to explicit credentials from environment variables, when present.
+function store() {
+  try {
+    return getStore(STORE);
+  } catch (e) {
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || process.env.BLOBS_SITE_ID;
+    const token = process.env.NETLIFY_API_TOKEN || process.env.NETLIFY_AUTH_TOKEN || process.env.BLOBS_TOKEN;
+    if (siteID && token) return getStore({ name: STORE, siteID, token });
+    throw e;
+  }
+}
 async function loadDB() {
-  const store = getStore(STORE);
-  const saved = await store.get(KEY, { type: "json" });
+  const saved = await store().get(KEY, { type: "json" });
   return saved ? Object.assign(core.freshDB(), saved) : core.freshDB();
 }
 async function saveDB(db) {
-  const store = getStore(STORE);
-  await store.setJSON(KEY, db);
+  await store().setJSON(KEY, db);
 }
 
 /* ---------- email (optional — set BREVO_API_KEY and EMAIL_FROM) ---------- */
@@ -64,7 +75,10 @@ exports.handler = async (event) => {
 
   let db;
   try { db = await loadDB(); }
-  catch (e) { console.error("storage load failed:", e.message); return json(500, { error: "Storage unavailable" }); }
+  catch (e) {
+    console.error("storage load failed:", e && e.stack || e);
+    return json(500, { error: "Storage unavailable", detail: (e && e.name || "") + ": " + (e && e.message || String(e)) });
+  }
 
   const authHeader = event.headers.authorization || event.headers.Authorization || "";
   const result = core.dispatch(db, {
@@ -75,7 +89,10 @@ exports.handler = async (event) => {
 
   if (result.dirty) {
     try { await saveDB(db); }
-    catch (e) { console.error("storage save failed:", e.message); return json(500, { error: "Couldn't save — try again" }); }
+    catch (e) {
+      console.error("storage save failed:", e && e.stack || e);
+      return json(500, { error: "Couldn't save — try again", detail: (e && e.name || "") + ": " + (e && e.message || String(e)) });
+    }
   }
   if (result.emails && result.emails.length) {
     await Promise.allSettled(result.emails.map(e => sendEmail(db.settings.orgName, e.to, e.subject, e.text)));
