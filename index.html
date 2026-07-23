@@ -162,6 +162,7 @@ let reqType = "annual";
 let apprFilter = "pending";
 let joinInfo = null;
 let resetInfo = null;
+let recoverInfo = { enabled: false };
 let modalEl = null;
 let bootOrg = "Somrak";
 let landed = false; // first-visit tab routing done?
@@ -205,6 +206,10 @@ async function boot(){
     }catch(e){ screen = "badinvite"; joinInfo = { error: e.message }; }
     return render();
   }
+  if(new URLSearchParams(location.search).get("recover")){
+    try{ recoverInfo = await api("GET","/api/recover"); }catch(e){ recoverInfo = { enabled:false }; }
+    screen = "recover"; return render();
+  }
   const b = await api("GET","/api/bootstrap").catch(() => ({ needsSetup:false }));
   if(b.orgName) bootOrg = b.orgName;
   if(b.needsSetup){ screen = "setup"; return render(); }
@@ -223,6 +228,7 @@ function render(){
   if(screen === "login"){ app.innerHTML = viewLogin(); return; }
   if(screen === "join"){ app.innerHTML = viewJoin(); return; }
   if(screen === "reset"){ app.innerHTML = viewReset(); return; }
+  if(screen === "recover"){ app.innerHTML = viewRecover(); return; }
   if(screen === "badinvite"){
     app.innerHTML = '<div class="hero"><div class="logo">🌴</div><h1>Somrak</h1></div>' +
       '<div class="wrap"><div class="card"><div class="empty">' + esc(joinInfo.error) + "</div>" +
@@ -290,6 +296,7 @@ function viewLogin(){
     '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doLogin()">Log in</button></div>' +
     '<div id="li-err" class="muted" style="margin-top:12px;text-align:center;color:#c0392b;display:none"></div>' +
     '<div class="muted" style="margin-top:12px;text-align:center"><a href="#" style="color:inherit" onclick="showForgot(document.getElementById(\'li-email\').value.trim());return false">Forgot your password?</a></div>' +
+    '<div class="muted" style="margin-top:8px;text-align:center;font-size:12px"><a href="/?recover=1" style="color:inherit">Locked out &amp; email isn\'t set up? Recover access</a></div>' +
     "</div></div>";
 }
 async function doLogin(){
@@ -358,6 +365,48 @@ async function doReset(){
     const r = await api("POST","/api/reset",{ token: resetInfo.token, password: $("#rs-pass").value });
     setToken(r.token); history.replaceState(null,"","/");
     screen = "app"; tab = "home"; await refresh(); toast("Password updated ✓");
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- emergency recovery (no email needed) ---------- */
+function viewRecover(){
+  const head = '<div class="hero"><div class="logo">🌴</div><h1>' + esc(recoverInfo.org || bootOrg) + "</h1>" +
+    "<p>Recover access to your account</p></div>";
+  if(!recoverInfo.enabled){
+    return head + '<div class="wrap"><div class="card">' +
+      '<h2>Turn on recovery first</h2>' +
+      '<div class="muted" style="line-height:1.6">Because email isn\'t set up, use a one-time recovery key:<br><br>' +
+      '<b>1.</b> Open your app on Netlify → <b>Site configuration → Environment variables</b>.<br>' +
+      '<b>2.</b> Add a variable named <b>RECOVERY_KEY</b> with any secret text you choose (e.g. a few random words).<br>' +
+      '<b>3.</b> Go to <b>Deploys → Trigger deploy → Deploy site</b> and wait for it to finish.<br>' +
+      '<b>4.</b> Come back to this page and refresh — you\'ll be able to reset your password.<br><br>' +
+      'Remove the RECOVERY_KEY variable afterwards so it can\'t be reused.</div>' +
+      '<div class="row-btns" style="margin-top:14px"><button class="btn btn-ghost" onclick="location.href=\'/?recover=1\'">Refresh</button>' +
+      '<button class="btn btn-ghost" onclick="location.href=\'/\'">Back to log in</button></div></div></div>';
+  }
+  return head + '<div class="wrap"><div class="card">' +
+    '<h2>Reset your password</h2>' +
+    '<div class="muted">Enter the recovery key you set in Netlify, your email, and a new password.</div>' +
+    '<label>Recovery key</label><input id="rc-key" autocomplete="off">' +
+    '<label>Your email</label><input id="rc-email" type="email" autocomplete="email">' +
+    '<label>New password (6+ characters)</label><input id="rc-pass" type="password">' +
+    '<label>Type it again</label><input id="rc-pass2" type="password">' +
+    '<div style="margin-top:18px"><button class="btn btn-primary" onclick="doRecover()">Reset password &amp; log in</button></div>' +
+    '<div class="muted" style="margin-top:12px">After you\'re back in, remove the RECOVERY_KEY variable in Netlify so it can\'t be used again.</div>' +
+    '<div class="muted" style="margin-top:8px;text-align:center"><a href="/" style="color:inherit">Back to log in</a></div>' +
+    "</div></div>";
+}
+async function doRecover(){
+  const key = $("#rc-key").value.trim(), email = $("#rc-email").value.trim();
+  const p1 = $("#rc-pass").value, p2 = $("#rc-pass2").value;
+  if(!key || !email) return toast("Enter the recovery key and your email");
+  if(!p1 || p1.length < 6) return toast("Password must be at least 6 characters");
+  if(p1 !== p2) return toast("Passwords don't match");
+  try{
+    const r = await api("POST","/api/recover",{ key, email, password:p1 });
+    setToken(r.token); history.replaceState(null,"","/");
+    screen = "app"; tab = "home"; landed = false; await refresh(); pickLandingTab(); render();
+    toast("Password reset ✓ — now remove RECOVERY_KEY in Netlify");
   }catch(e){ toast(e.message); }
 }
 

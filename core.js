@@ -165,6 +165,7 @@ function stateFor(db, u, emailEnabled) {
 function dispatch(db, ctx) {
   const { method, pathname, body, authHeader, base } = ctx;
   const emailEnabled = !!ctx.emailEnabled;
+  const recoveryKey = String(ctx.recoveryKey || "");
 
   const emails = [];
   let dirty = false;
@@ -247,6 +248,29 @@ function dispatch(db, ctx) {
       t.pass = hashPass(b.password); t.resetToken = null; t.resetExpires = null;
       save();
       return { token: sign(db, t.id) };
+    },
+
+    /* ---- emergency recovery (no email needed) ----
+       Enabled only when a RECOVERY_KEY environment variable is set.
+       Lets a locked-out person reset their own password by proving they
+       know that key. Turn it off again (remove the env var) afterwards. */
+    "GET /api/recover": () => ({ enabled: !!recoveryKey, org: db.settings.orgName }),
+
+    "POST /api/recover": (b) => {
+      if (!recoveryKey)
+        throw err(403, "Recovery is turned off. Set a RECOVERY_KEY environment variable where the app is hosted, then try again.");
+      const given = String(b.key || "");
+      const a = Buffer.from(given), bk = Buffer.from(recoveryKey);
+      if (a.length !== bk.length || !crypto.timingSafeEqual(a, bk))
+        throw err(403, "That recovery key is wrong.");
+      const email = String(b.email || "").trim().toLowerCase();
+      const t = db.users.find(x => x.email === email && x.active);
+      if (!t) throw err(404, "No active account uses that email.");
+      if (!b.password || b.password.length < 6) throw err(400, "Password must be at least 6 characters");
+      t.pass = hashPass(b.password);
+      t.inviteToken = null; t.resetToken = null; t.resetExpires = null;
+      save();
+      return { token: sign(db, t.id), name: t.name };
     },
 
     "GET /api/state": (b, u) => { requireAuth(u); return stateFor(db, u, emailEnabled); },

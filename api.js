@@ -70,6 +70,7 @@ exports.handler = async (event) => {
   const result = core.dispatch(db, {
     method: event.httpMethod, pathname: url.pathname, body,
     authHeader, base: url.origin, emailEnabled: emailEnabled(),
+    recoveryKey: process.env.RECOVERY_KEY || "",
   });
 
   if (result.dirty) {

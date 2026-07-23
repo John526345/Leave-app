@@ -96,7 +96,13 @@ Setup (free, ~10 minutes):
 - **Public holidays:** Settings → Public holidays. Add each holiday once; it applies to everyone and is never counted against leave. Add next year's holidays when the government announces them.
 - **Reports:** Settings → Reports → download a CSV of balances or of every leave request, to open in Excel or Google Sheets.
 - **Backups:** Settings → Backup → **Export backup** downloads everything as one file. Do it every week or two and keep it somewhere safe (Google Drive etc.). **Restore from backup** puts a backup file back — useful when moving hosts or recovering.
-- **Forgot password:** if email is set up, staff use "Forgot your password?" on the login page. If not, use the 🔗 Invite button to resend a fresh link to anyone who hasn't joined yet.
+- **Forgot password (email set up):** staff use "Forgot your password?" on the login page.
+- **Locked out with no email set up (e.g. the HR/admin account):** use the one-time recovery key.
+  1. In Netlify: **Site configuration → Environment variables** → add a variable named **`RECOVERY_KEY`** with any secret text you choose.
+  2. **Deploys → Trigger deploy → Deploy site**, and wait for it to finish (env-var changes only take effect after a redeploy).
+  3. Go to `https://your-site.netlify.app/?recover=1` (or click "Locked out…" on the login page), enter the recovery key, your email, and a new password.
+  4. You're back in. **Remove the `RECOVERY_KEY` variable** afterwards (and redeploy) so it can't be reused.
+- **Staff who never joined:** use the 🔗 Invite button to resend a fresh link.
 - **Security:** passwords are stored hashed (scrypt), never in plain text. Login sessions are signed and expire after 30 days.
 
 ---

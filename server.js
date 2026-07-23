@@ -89,6 +89,7 @@ const server = http.createServer((req, res) => {
     const result = core.dispatch(db, {
       method: req.method, pathname: url.pathname, body,
       authHeader: req.headers.authorization || "", base, emailEnabled: emailEnabled(),
+      recoveryKey: process.env.RECOVERY_KEY || "",
     });
     if (result.dirty) { try { persist(); } catch (e) { console.error("save failed:", e.message); } }
     result.emails.forEach(e => sendEmail(e.to, e.subject, e.text));
