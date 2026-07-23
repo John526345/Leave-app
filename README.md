@@ -30,26 +30,23 @@ Built for a small team (≈20 people, a few department heads, one HR manager). E
 
 ## Put it online with Netlify (recommended — no terminal, free tier works)
 
-Netlify hosts the app for free and stores your data in **Netlify Blobs**, which is built in — there is no database or disk to set up.
+Netlify hosts the app for free and stores your data in **Netlify Blobs**, which is built in — there is no database or disk to set up. Deploy from GitHub so Netlify installs the app's one dependency and runs the build automatically.
 
-### The easy way (drag and drop)
+### Steps
 
-1. Create a free account at https://app.netlify.com.
-2. Zip this folder (the one containing `netlify.toml`) if it isn't already a zip.
-3. In Netlify: **Add new site → Deploy manually**, then drag the folder/zip onto the page.
-4. Netlify installs dependencies, publishes the app, and gives you an address like `https://your-site.netlify.app`.
-5. Open that address and create the HR (admin) account — **the first person to open it becomes admin.**
+1. Create a GitHub repository and put **all the files from this folder at the top level** of it (so `package.json`, `netlify.toml`, `index.html` and the `netlify` folder are at the root — not inside another folder). The easiest reliable way: on GitHub, **Add file → Upload files**, then drag in every file **and** the `netlify` folder.
+2. Create a free account at https://app.netlify.com.
+3. In Netlify: **Add new site → Import an existing project** → connect GitHub → pick your repo.
+4. Leave the build settings as detected — they come from `netlify.toml` (build command `mkdir -p public && cp index.html manifest.json icon.jpg public/`, publish directory `public`). Click **Deploy**.
+5. When it finishes, open the address Netlify gives you (like `https://your-site.netlify.app`) and create the HR (admin) account — **the first person to open it becomes admin.**
 
 > Tip: give the site a clear name in **Site configuration → Change site name**, e.g. `alongsiders-leave` → `https://alongsiders-leave.netlify.app`.
 
-### The connected way (auto-updates from GitHub)
+**Netlify Blobs is enabled automatically** for any Netlify site — you don't need to turn anything on. Your records persist across deploys and restarts, and pushing new code to GitHub never touches your data.
 
-1. Put this folder in a GitHub repository.
-2. In Netlify: **Add new site → Import from Git** → pick the repo.
-3. Leave the build settings as detected (they come from `netlify.toml`). Click **Deploy**.
-4. Every time you push a change to GitHub, Netlify redeploys automatically. Your data in Netlify Blobs is untouched by deploys.
+> **Fixing the earlier "Deploy directory 'public' does not exist" error:** that happened because the nested `public/` folder didn't upload to your GitHub repo. This version removes that dependency — `index.html`, `manifest.json` and `icon.jpg` now sit at the top level, and Netlify builds the `public` folder itself during deploy. Re-upload these files to your repo (replacing the old ones) and it will deploy successfully.
 
-**Netlify Blobs is enabled automatically** for any Netlify site — you don't need to turn anything on. Your records persist across deploys and restarts.
+> **Avoid "Deploy manually" (drag-and-drop):** that method skips `npm install`, so the leave-request function won't have what it needs. Use the GitHub method above.
 
 ---
 
@@ -112,6 +109,6 @@ Setup (free, ~10 minutes):
 | `netlify/functions/api.js` | The Netlify Function; stores data in Netlify Blobs. Used when hosted on Netlify. |
 | `netlify.toml` | Netlify configuration (routing + where files live). |
 | `server.js` | Standalone Node server for local use / Fly / Render (stores data in `data/db.json`). |
-| `public/index.html` | The whole phone-friendly app (one file). |
-| `public/manifest.json`, `public/icon.jpg` | "Add to Home Screen" app icon and name. |
+| `index.html` | The whole phone-friendly app (one file). |
+| `manifest.json`, `icon.jpg` | "Add to Home Screen" app icon and name. |
 | `Dockerfile`, `fly.toml` | For deploying the standalone server to Fly.io. |

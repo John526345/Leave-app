@@ -58,9 +58,10 @@ function serveStatic(res, pathname) {
   if (pathname === "/health") { res.writeHead(200); return res.end("ok"); }
   const safe = path.normalize(pathname).replace(/^(\.\.[/\\])+/, "");
   const file = path.join(PUBLIC, safe);
-  if (file.startsWith(PUBLIC) && pathname !== "/" && fs.existsSync(file) && fs.statSync(file).isFile()) {
-    const ext = path.extname(file).toLowerCase();
-    res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream",
+  const ext = path.extname(file).toLowerCase();
+  // Only ever serve known static assets (never source files like core.js).
+  if (MIME[ext] && file.startsWith(PUBLIC) && pathname !== "/" && fs.existsSync(file) && fs.statSync(file).isFile()) {
+    res.writeHead(200, { "Content-Type": MIME[ext],
       "Cache-Control": ext === ".html" ? "no-cache" : "public, max-age=86400" });
     return res.end(fs.readFileSync(file));
   }

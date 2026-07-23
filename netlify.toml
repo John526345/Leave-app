@@ -1,8 +1,11 @@
 # Netlify configuration for Leave Tracker
-# The static app lives in public/. All /api/* calls go to one function.
+# The static app files (index.html, manifest.json, icon.jpg) live at the
+# project root. During the build we assemble them into a "public" folder,
+# which Netlify then publishes. All /api/* calls go to one function.
 # Data is stored in Netlify Blobs (no database or disk to set up).
 
 [build]
+  command = "mkdir -p public && cp index.html manifest.json icon.jpg public/"
   publish = "public"
   functions = "netlify/functions"
 
