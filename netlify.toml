@@ -1,11 +1,14 @@
 # Netlify configuration for Leave Tracker
-# The static app files (index.html, manifest.json, icon.jpg) live at the
-# project root. During the build we assemble them into a "public" folder,
-# which Netlify then publishes. All /api/* calls go to one function.
+#
+# Every file in this project lives at the top level (flat) so nothing gets
+# lost when uploading to GitHub. During the build we assemble the two folders
+# Netlify expects:
+#   - public/            the static app (index.html, manifest.json, icon.jpg)
+#   - netlify/functions/ the single API function (built from api.js)
 # Data is stored in Netlify Blobs (no database or disk to set up).
 
 [build]
-  command = "mkdir -p public && cp index.html manifest.json icon.jpg public/"
+  command = "mkdir -p public netlify/functions && cp index.html manifest.json icon.jpg public/ && cp api.js netlify/functions/api.js"
   publish = "public"
   functions = "netlify/functions"
 
@@ -16,8 +19,7 @@
   status = 200
 
 # ...and let the single-page app handle every other path
-# (e.g. /join and /?reset=...). Real files in public/ are served first,
-# so icon.jpg and manifest.json still work.
+# (e.g. /join and /?recover=1). Real files in public/ are served first.
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -34,7 +34,7 @@ Netlify hosts the app for free and stores your data in **Netlify Blobs**, which 
 
 ### Steps
 
-1. Create a GitHub repository and put **all the files from this folder at the top level** of it (so `package.json`, `netlify.toml`, `index.html` and the `netlify` folder are at the root — not inside another folder). The easiest reliable way: on GitHub, **Add file → Upload files**, then drag in every file **and** the `netlify` folder.
+1. Create a GitHub repository and upload **all the files from this folder at the top level** — every file sits at the root, there are **no subfolders**, so nothing can get lost. On GitHub use **Add file → Upload files** and drag in all of them (`api.js`, `core.js`, `index.html`, `manifest.json`, `icon.jpg`, `netlify.toml`, `package.json`, `server.js`, `README.md`, `Dockerfile`, `fly.toml`). Netlify builds the `public/` and `netlify/functions/` folders for you during deploy.
 2. Create a free account at https://app.netlify.com.
 3. In Netlify: **Add new site → Import an existing project** → connect GitHub → pick your repo.
 4. Leave the build settings as detected — they come from `netlify.toml` (build command `mkdir -p public && cp index.html manifest.json icon.jpg public/`, publish directory `public`). Click **Deploy**.
@@ -112,8 +112,8 @@ Setup (free, ~10 minutes):
 | File | What it is |
 |------|------------|
 | `core.js` | All the app logic (approvals, balances, holidays, reports) — shared by both hosting modes. |
-| `netlify/functions/api.js` | The Netlify Function; stores data in Netlify Blobs. Used when hosted on Netlify. |
-| `netlify.toml` | Netlify configuration (routing + where files live). |
+| `api.js` | The Netlify Function; stores data in Netlify Blobs. At deploy, Netlify copies it into `netlify/functions/`. |
+| `netlify.toml` | Netlify configuration. Its build step assembles the `public/` and `netlify/functions/` folders, so every file can stay flat at the top level (nothing to lose when uploading to GitHub). |
 | `server.js` | Standalone Node server for local use / Fly / Render (stores data in `data/db.json`). |
 | `index.html` | The whole phone-friendly app (one file). |
 | `manifest.json`, `icon.jpg` | "Add to Home Screen" app icon and name. |

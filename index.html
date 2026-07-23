@@ -378,10 +378,10 @@ function viewRecover(){
       '<div class="muted" style="line-height:1.6">Because email isn\'t set up, use a one-time recovery key:<br><br>' +
       '<b>1.</b> Open your app on Netlify → <b>Site configuration → Environment variables</b>.<br>' +
       '<b>2.</b> Add a variable named <b>RECOVERY_KEY</b> with any secret text you choose (e.g. a few random words).<br>' +
-      '<b>3.</b> Go to <b>Deploys → Trigger deploy → Deploy site</b> and wait for it to finish.<br>' +
-      '<b>4.</b> Come back to this page and refresh — you\'ll be able to reset your password.<br><br>' +
+      '<b>3.</b> Set its <b>Scopes</b> to <b>All scopes</b> (so <b>Functions</b> is included), then <b>Deploys → Trigger deploy → Clear cache and deploy site</b> and wait for "Published".<br>' +
+      '<b>4.</b> Tap <b>Check again</b> below — you\'ll be able to reset your password.<br><br>' +
       'Remove the RECOVERY_KEY variable afterwards so it can\'t be reused.</div>' +
-      '<div class="row-btns" style="margin-top:14px"><button class="btn btn-ghost" onclick="location.href=\'/?recover=1\'">Refresh</button>' +
+      '<div class="row-btns" style="margin-top:14px"><button class="btn btn-primary" onclick="recheckRecover()">Check again</button>' +
       '<button class="btn btn-ghost" onclick="location.href=\'/\'">Back to log in</button></div></div></div>';
   }
   return head + '<div class="wrap"><div class="card">' +
@@ -395,6 +395,12 @@ function viewRecover(){
     '<div class="muted" style="margin-top:12px">After you\'re back in, remove the RECOVERY_KEY variable in Netlify so it can\'t be used again.</div>' +
     '<div class="muted" style="margin-top:8px;text-align:center"><a href="/" style="color:inherit">Back to log in</a></div>' +
     "</div></div>";
+}
+async function recheckRecover(){
+  try{ recoverInfo = await api("GET","/api/recover"); }
+  catch(e){ recoverInfo = { enabled:false }; }
+  render();
+  if(!recoverInfo.enabled) toast("Still off — check the name is RECOVERY_KEY, its scope includes Functions, and redeploy");
 }
 async function doRecover(){
   const key = $("#rc-key").value.trim(), email = $("#rc-email").value.trim();
